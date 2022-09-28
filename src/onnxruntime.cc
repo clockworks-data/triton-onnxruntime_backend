@@ -806,10 +806,12 @@ ModelState::AutoCompleteMaxBatch(
       bool found_dynamic_batching =
           ModelConfig().Find("dynamic_batching", &value);
       if (!found_sequence_batching && !found_dynamic_batching) {
-        triton::common::TritonJson::Value dynamic_batching(
-            ModelConfig(), triton::common::TritonJson::ValueType::OBJECT);
-        RETURN_IF_ERROR(
-            ModelConfig().Add("dynamic_batching", std::move(dynamic_batching)));
+        LOG_MESSAGE(TRITONSERVER_LOG_WARN, "using default scheduler");
+        // triton::common::TritonJson::Value dynamic_batching(
+        //     ModelConfig(), triton::common::TritonJson::ValueType::OBJECT);
+        // RETURN_IF_ERROR(
+        //     ModelConfig().Add("dynamic_batching",
+        //     std::move(dynamic_batching)));
       }
     }
 
@@ -1833,12 +1835,13 @@ ModelInstanceState::SetInputTensors(
       std::vector<std::pair<TRITONSERVER_MemoryType, int64_t>>
           allowed_input_types;
       if (Kind() == TRITONSERVER_INSTANCEGROUPKIND_GPU) {
-        allowed_input_types = {{TRITONSERVER_MEMORY_GPU, DeviceId()},
-                               {TRITONSERVER_MEMORY_CPU_PINNED, 0},
-                               {TRITONSERVER_MEMORY_CPU, 0}};
+        allowed_input_types = {
+            {TRITONSERVER_MEMORY_GPU, DeviceId()},
+            {TRITONSERVER_MEMORY_CPU_PINNED, 0},
+            {TRITONSERVER_MEMORY_CPU, 0}};
       } else {
-        allowed_input_types = {{TRITONSERVER_MEMORY_CPU_PINNED, 0},
-                               {TRITONSERVER_MEMORY_CPU, 0}};
+        allowed_input_types = {
+            {TRITONSERVER_MEMORY_CPU_PINNED, 0}, {TRITONSERVER_MEMORY_CPU, 0}};
       }
 
       RETURN_IF_ERROR(collector->ProcessTensor(
